@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}PokeDex{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-800">
+    <header class="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-slate-200">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <h1 class="text-2xl font-bold tracking-tight">PokeDex</h1>
+        <nav class="text-sm text-slate-600 flex items-center gap-4">
+          <a href="/" class="hover:text-slate-900 transition-colors">Inicio</a>
+          <a href="/favorites" class="hover:text-slate-900 transition-colors">Favoritos</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="py-8 text-center text-xs text-slate-500">
+      <p>Datos por PokeAPI</p>
+    </footer>
+
+    <script>
+      const FAV_KEY = 'poke_favorites_ids';
+      function getFavs() {
+        try {
+          const v = localStorage.getItem(FAV_KEY);
+          return v ? JSON.parse(v) : [];
+        } catch (e) { return []; }
+      }
+      function setFavs(ids) {
+        try { localStorage.setItem(FAV_KEY, JSON.stringify(ids)); } catch (e) {}
+        document.dispatchEvent(new CustomEvent('favorites:changed', { detail: ids }));
+      }
+      function isFav(id) {
+        const ids = getFavs();
+        return ids.includes(Number(id));
+      }
+      function toggleFav(id) {
+        id = Number(id);
+        let ids = getFavs();
+        if (ids.includes(id)) {
+          ids = ids.filter(x => x !== id);
+        } else {
+          ids.push(id);
+        }
+        setFavs(ids);
+        updateStarStates();
+        return ids.includes(id);
+      }
+      function updateStarStates() {
+        const ids = new Set(getFavs());
+        document.querySelectorAll('[data-fav-btn]')?.forEach(btn => {
+          const id = Number(btn.getAttribute('data-id'));
+          const on = ids.has(id);
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          const svg = btn.querySelector('svg');
+          if (svg) {
+            svg.classList.toggle('fill-yellow-400', on);
+            svg.classList.toggle('fill-transparent', !on);
+            svg.classList.toggle('stroke-yellow-500', on);
+            svg.classList.toggle('stroke-slate-400', !on);
+          }
+        });
+      }
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-fav-btn]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        toggleFav(id);
+      });
+      document.addEventListener('DOMContentLoaded', updateStarStates);
+      document.addEventListener('favorites:changed', updateStarStates);
+    </script>
+  </body>
+</html>

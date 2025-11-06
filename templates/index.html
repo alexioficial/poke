@@ -2,9 +2,66 @@
 {% block title %}PokeDex - Página {{ page }}{% endblock %}
 
 {% block content %}
-  <div class="flex items-center justify-between mb-6">
-    <h2 class="text-xl font-semibold">Pokémon</h2>
+  <div class="flex items-start justify-between gap-4 mb-4">
+    <h2 class="text-xl font-semibold mt-2">Pokémon</h2>
+    <form method="get" class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <input type="hidden" name="page" value="1" />
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Nombre</label>
+        <input name="q" value="{{ q }}" placeholder="pikachu" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">ID</label>
+        <input name="id" value="{{ id_param }}" placeholder="25" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Tipos (coma)</label>
+        <input name="types" value="{{ types_param }}" placeholder="electric,fire" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Ordenar por</label>
+          <select name="sort" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
+            <option value="id" {% if sort=='id' %}selected{% endif %}>ID</option>
+            <option value="name" {% if sort=='name' %}selected{% endif %}>Nombre</option>
+            <option value="type" {% if sort=='type' %}selected{% endif %}>Tipo principal</option>
+            <option value="stat:hp" {% if sort=='stat:hp' %}selected{% endif %}>Stat: HP</option>
+            <option value="stat:attack" {% if sort=='stat:attack' %}selected{% endif %}>Stat: Attack</option>
+            <option value="stat:defense" {% if sort=='stat:defense' %}selected{% endif %}>Stat: Defense</option>
+            <option value="stat:speed" {% if sort=='stat:speed' %}selected{% endif %}>Stat: Speed</option>
+            <option value="stat:special-attack" {% if sort=='stat:special-attack' %}selected{% endif %}>Stat: Sp. Atk</option>
+            <option value="stat:special-defense" {% if sort=='stat:special-defense' %}selected{% endif %}>Stat: Sp. Def</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Dirección</label>
+          <select name="dir" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
+            <option value="asc" {% if dir=='asc' %}selected{% endif %}>Asc</option>
+            <option value="desc" {% if dir=='desc' %}selected{% endif %}>Desc</option>
+          </select>
+        </div>
+      </div>
+      <div class="md:col-span-2 lg:col-span-1 flex items-end">
+        <button class="w-full px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">Aplicar</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="mb-4 flex items-center justify-between">
     <div class="text-sm text-slate-500">Página {{ page }} de {{ total_pages }}</div>
+    <div class="flex items-center gap-2">
+      {% set qparams = "&q=" ~ q ~ "&id=" ~ id_param ~ "&types=" ~ types_param ~ "&sort=" ~ sort ~ "&dir=" ~ dir %}
+      {% if has_prev %}
+        <a href="/?page={{ page - 1 }}{{ qparams }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">← Anterior</a>
+      {% else %}
+        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-400">← Anterior</span>
+      {% endif %}
+      {% if has_next %}
+        <a href="/?page={{ page + 1 }}{{ qparams }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">Siguiente →</a>
+      {% else %}
+        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-400">Siguiente →</span>
+      {% endif %}
+    </div>
   </div>
 
   {% if pokemons %}
@@ -42,24 +99,19 @@
     <div class="text-center text-slate-500">No se encontraron resultados.</div>
   {% endif %}
 
-  <div class="mt-8 flex items-center justify-between">
-    <div>
-      {% if has_prev %}
-        <a href="/?page={{ page - 1 }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition">
-          ← Anterior
-        </a>
-      {% else %}
-        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-400">← Anterior</span>
-      {% endif %}
-    </div>
+  <div class="mt-6 flex items-center justify-between">
     <div class="text-sm text-slate-500">Página {{ page }} de {{ total_pages }}</div>
-    <div>
-      {% if has_next %}
-        <a href="/?page={{ page + 1 }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition">
-          Siguiente →
-        </a>
+    <div class="flex items-center gap-2">
+      {% set qparams = "&q=" ~ q ~ "&id=" ~ id_param ~ "&types=" ~ types_param ~ "&sort=" ~ sort ~ "&dir=" ~ dir %}
+      {% if has_prev %}
+        <a href="/?page={{ page - 1 }}{{ qparams }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">← Anterior</a>
       {% else %}
-        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-400">Siguiente →</span>
+        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-400">← Anterior</span>
+      {% endif %}
+      {% if has_next %}
+        <a href="/?page={{ page + 1 }}{{ qparams }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">Siguiente →</a>
+      {% else %}
+        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-400">Siguiente →</span>
       {% endif %}
     </div>
   </div>

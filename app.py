@@ -47,35 +47,85 @@ def extract_types(pokemon: dict) -> list[str]:
 
 @app.route("/")
 def index():
-    # Pagination
+    # Params
     try:
         page = int(request.args.get("page", 1))
         if page < 1:
             page = 1
     except ValueError:
         page = 1
+    q = (request.args.get("q") or "").strip()
+    id_param = (request.args.get("id") or "").strip()
+    types_param = (request.args.get("types") or "").strip()
+    sort = (request.args.get("sort") or "id").strip()
+    direction = (request.args.get("dir") or "asc").strip().lower()
+    dir_val = 1 if direction != "desc" else -1
 
+    # Mongo query
+    query = {}
+    if q:
+        query["name"] = {"$regex": q, "$options": "i"}
+    if id_param.isdigit():
+        query["id"] = int(id_param)
+    if types_param:
+        type_list = [t.strip().lower() for t in types_param.split(",") if t.strip()]
+        if type_list:
+            query["types.type.name"] = {"$in": type_list}
+
+    # Pagination calc
     offset = (page - 1) * PAGE_SIZE
-
-    count = int(pokemon_col.count_documents({}))
+    count = int(pokemon_col.count_documents(query))
     total_pages = max(1, (count + PAGE_SIZE - 1) // PAGE_SIZE)
 
-    cursor = (
-        pokemon_col.find({}, {"id": 1, "name": 1, "types": 1, "sprites": 1, "_id": 0})
-        .sort("id", 1)
-        .skip(offset)
-        .limit(PAGE_SIZE)
-    )
+    # Sorting and fetching
+    stat_prefix = "stat:"
     pokemons = []
-    for doc in cursor:
-        pokemons.append(
-            {
+    if sort.startswith(stat_prefix):
+        stat_name = sort[len(stat_prefix):]
+        pipeline = [
+            {"$match": query},
+            {"$addFields": {
+                "sort_stat": {
+                    "$let": {
+                        "vars": {
+                            "matched": {"$filter": {"input": "$stats", "as": "s", "cond": {"$eq": ["$$s.stat.name", stat_name]}}}
+                        },
+                        "in": {"$ifNull": [{"$arrayElemAt": ["$$matched.base_stat", 0]}, -1]}
+                    }
+                }
+            }},
+            {"$sort": {"sort_stat": dir_val, "id": 1}},
+            {"$skip": offset},
+            {"$limit": PAGE_SIZE},
+            {"$project": {"_id": 0, "id": 1, "name": 1, "types": 1, "sprites": 1}}
+        ]
+        for doc in pokemon_col.aggregate(pipeline):
+            pokemons.append({
                 "id": doc.get("id"),
                 "name": doc.get("name"),
                 "types": extract_types(doc),
                 "sprite": pick_sprite(doc),
-            }
+            })
+    else:
+        sort_field = "id"
+        if sort == "name":
+            sort_field = "name"
+        elif sort == "type":
+            sort_field = "types.0.type.name"
+        cursor = (
+            pokemon_col
+            .find(query, {"id": 1, "name": 1, "types": 1, "sprites": 1, "_id": 0})
+            .sort(sort_field, dir_val)
+            .skip(offset)
+            .limit(PAGE_SIZE)
         )
+        for doc in cursor:
+            pokemons.append({
+                "id": doc.get("id"),
+                "name": doc.get("name"),
+                "types": extract_types(doc),
+                "sprite": pick_sprite(doc),
+            })
 
     has_prev = page > 1
     has_next = page < total_pages
@@ -88,6 +138,11 @@ def index():
         has_prev=has_prev,
         has_next=has_next,
         type_classes=TYPE_CLASSES,
+        q=q,
+        id_param=id_param,
+        types_param=types_param,
+        sort=sort,
+        dir=direction,
     )
 
 

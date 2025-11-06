@@ -7,6 +7,22 @@
     <div id="fav-stats" class="text-sm text-slate-500"></div>
   </div>
 
+  <script type="application/json" id="type-classes-json">{{ type_classes | tojson }}</script>
+
+  <div id="fav-pagination-top" class="mb-4 flex items-center justify-between hidden">
+    <div>
+      <button id="fav-prev-top" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+        ← Anterior
+      </button>
+    </div>
+    <div id="fav-page-info-top" class="text-sm text-slate-500"></div>
+    <div>
+      <button id="fav-next-top" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+        Siguiente →
+      </button>
+    </div>
+  </div>
+
   <div id="fav-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[200px]"></div>
 
   <div id="fav-pagination" class="mt-8 flex items-center justify-between hidden">
@@ -50,13 +66,18 @@
       document.getElementById('fav-stats').textContent = `Total favoritos: ${total}`;
 
       const grid = document.getElementById('fav-grid');
+      const pagTop = document.getElementById('fav-pagination-top');
       const pag = document.getElementById('fav-pagination');
+      const infoTop = document.getElementById('fav-page-info-top');
       const info = document.getElementById('fav-page-info');
+      const prevTop = document.getElementById('fav-prev-top');
       const prevBtn = document.getElementById('fav-prev');
+      const nextTop = document.getElementById('fav-next-top');
       const nextBtn = document.getElementById('fav-next');
 
       if (ids.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center text-slate-500">No tienes favoritos aún.</div>`;
+        pagTop.classList.add('hidden');
         pag.classList.add('hidden');
         return { page: clampedPage, totalPages };
       }
@@ -69,14 +90,20 @@
         grid.innerHTML = `<div class="col-span-full text-center text-red-600">Error cargando favoritos.</div>`;
       }
 
-      // Paginación
+      // Paginación (top y bottom)
+      pagTop.classList.remove('hidden');
       pag.classList.remove('hidden');
+      infoTop.textContent = `Página ${clampedPage} de ${totalPages}`;
       info.textContent = `Página ${clampedPage} de ${totalPages}`;
-      prevBtn.disabled = clampedPage <= 1;
-      nextBtn.disabled = clampedPage >= totalPages;
+      const disablePrev = clampedPage <= 1;
+      const disableNext = clampedPage >= totalPages;
+      prevTop.disabled = disablePrev; prevBtn.disabled = disablePrev;
+      nextTop.disabled = disableNext; nextBtn.disabled = disableNext;
 
-      prevBtn.onclick = () => { const np = Math.max(1, clampedPage - 1); setPageToUrl(np); fetchFavsPage(np); };
-      nextBtn.onclick = () => { const np = Math.min(totalPages, clampedPage + 1); setPageToUrl(np); fetchFavsPage(np); };
+      const goPrev = () => { const np = Math.max(1, clampedPage - 1); setPageToUrl(np); fetchFavsPage(np); };
+      const goNext = () => { const np = Math.min(totalPages, clampedPage + 1); setPageToUrl(np); fetchFavsPage(np); };
+      prevTop.onclick = goPrev; prevBtn.onclick = goPrev;
+      nextTop.onclick = goNext; nextBtn.onclick = goNext;
 
       // Actualiza estrellas según localStorage
       updateStarStates();
@@ -85,7 +112,7 @@
     }
 
     function typeBadge(t) {
-      const classes = {{ type_classes | tojson }};
+      const classes = JSON.parse(document.getElementById('type-classes-json').textContent || '{}');
       const cls = classes[t] || 'bg-slate-100 text-slate-700 border-slate-200';
       return `<span class="px-2 py-1 text-xs font-medium rounded-full border ${cls}">${t}</span>`;
     }

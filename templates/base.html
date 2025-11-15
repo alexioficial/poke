@@ -8,17 +8,7 @@
     <style>
       .pkm-card-ambient {
         position: relative;
-        overflow: hidden;
-      }
-      .pkm-card-ambient::before {
-        content: "";
-        position: absolute;
-        inset: -4px;
-        border-radius: inherit;
-        background: linear-gradient(to bottom, var(--pkm-c1, #6366f1), var(--pkm-c2, #9ca3af));
-        opacity: 0.6;
-        filter: blur(10px);
-        z-index: -1;
+        transition: box-shadow 0.3s ease;
       }
     </style>
   </head>
@@ -117,17 +107,44 @@
       function applyCardAmbient() {
         const cards = document.querySelectorAll('[data-pkm-card]');
         cards.forEach((card) => {
-          const typesAttr = card.getAttribute('data-types') || '';
-          const types = typesAttr
+          const colorsAttr = card.getAttribute('data-colors') || '';
+          const colorParts = colorsAttr
             .split(',')
-            .map((t) => t.trim().toLowerCase())
+            .map((c) => c.trim())
             .filter(Boolean);
-          const primary = types[0] || null;
-          const secondary = types[1] || null;
-          const c1 = primary ? (TYPE_COLORS[primary] || '#6366f1') : '#6366f1';
-          const c2 = secondary ? (TYPE_COLORS[secondary] || c1) : '#9ca3af';
-          card.style.setProperty('--pkm-c1', c1);
-          card.style.setProperty('--pkm-c2', c2);
+
+          let c1 = colorParts[0] || null;
+          let c2 = colorParts[1] || null;
+
+          if (!c1 || !c2) {
+            const typesAttr = card.getAttribute('data-types') || '';
+            const types = typesAttr
+              .split(',')
+              .map((t) => t.trim().toLowerCase())
+              .filter(Boolean);
+            const primary = types[0] || null;
+            const secondary = types[1] || null;
+
+            if (!c1 && primary) {
+              c1 = TYPE_COLORS[primary] || '#6366f1';
+            }
+            if (!c2) {
+              if (secondary) {
+                c2 = TYPE_COLORS[secondary] || c1 || '#9ca3af';
+              } else {
+                c2 = '#9ca3af';
+              }
+            }
+          }
+
+          if (!c1) c1 = '#6366f1';
+          if (!c2) c2 = '#9ca3af';
+
+          card.style.boxShadow = `
+            0 0 0 3px ${c1},          /* outline principal */
+            0 -18px 32px -10px ${c1}, /* glow superior */
+            0 18px 32px -10px ${c2}   /* glow inferior */
+          `;
         });
       }
 

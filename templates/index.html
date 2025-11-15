@@ -95,7 +95,8 @@
       {% for p in pokemons %}
         <article class="pkm-card-ambient group relative bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 hover:shadow-md transition overflow-hidden"
                  data-pkm-card
-                 data-types="{{ p.types | join(',') }}">
+                 data-types="{{ p.types | join(',') }}"
+                 data-colors="{{ p.color_primary or '' }},{{ p.color_secondary or '' }}">
           <button class="absolute top-2 right-2 p-1 rounded-full bg-white/80 ring-1 ring-slate-200 hover:bg-white transition"
                   type="button" aria-label="Favorito" data-fav-btn data-id="{{ p.id }}">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -106,7 +107,7 @@
           </button>
           <div class="aspect-square bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
             {% if p.sprite %}
-              <img src="{{ p.sprite }}" alt="{{ p.name }}" class="w-40 h-40 object-contain drop-shadow-md group-hover:scale-105 transition"/>
+              <img src="{{ p.sprite }}" alt="{{ p.name }}" class="w-40 h-40 object-contain drop-shadow-md group-hover:scale-105 transition" crossorigin="anonymous"/>
             {% else %}
               <div class="text-slate-400">Sin imagen</div>
             {% endif %}

@@ -97,7 +97,7 @@ def index():
             {"$sort": {"sort_stat": dir_val, "id": 1}},
             {"$skip": offset},
             {"$limit": PAGE_SIZE},
-            {"$project": {"_id": 0, "id": 1, "name": 1, "types": 1, "sprites": 1}}
+            {"$project": {"_id": 0, "id": 1, "name": 1, "types": 1, "sprites": 1, "color_primary": 1, "color_secondary": 1}}
         ]
         for doc in pokemon_col.aggregate(pipeline):
             pokemons.append({
@@ -105,6 +105,8 @@ def index():
                 "name": doc.get("name"),
                 "types": extract_types(doc),
                 "sprite": pick_sprite(doc),
+                "color_primary": doc.get("color_primary"),
+                "color_secondary": doc.get("color_secondary"),
             })
     else:
         sort_field = "id"
@@ -114,7 +116,7 @@ def index():
             sort_field = "types.0.type.name"
         cursor = (
             pokemon_col
-            .find(query, {"id": 1, "name": 1, "types": 1, "sprites": 1, "_id": 0})
+            .find(query, {"id": 1, "name": 1, "types": 1, "sprites": 1, "color_primary": 1, "color_secondary": 1, "_id": 0})
             .sort(sort_field, dir_val)
             .skip(offset)
             .limit(PAGE_SIZE)
@@ -125,6 +127,8 @@ def index():
                 "name": doc.get("name"),
                 "types": extract_types(doc),
                 "sprite": pick_sprite(doc),
+                "color_primary": doc.get("color_primary"),
+                "color_secondary": doc.get("color_secondary"),
             })
 
     has_prev = page > 1
@@ -166,7 +170,10 @@ def api_pokemon_by_ids():
 
     docs = (
         pokemon_col
-        .find({"id": {"$in": ids}}, {"_id": 0, "id": 1, "name": 1, "types": 1, "sprites": 1})
+        .find(
+            {"id": {"$in": ids}},
+            {"_id": 0, "id": 1, "name": 1, "types": 1, "sprites": 1, "color_primary": 1, "color_secondary": 1},
+        )
         .sort("id", 1)
     )
     result = []
@@ -176,6 +183,8 @@ def api_pokemon_by_ids():
             "name": d.get("name"),
             "types": [t.get("type", {}).get("name") for t in (d.get("types") or [])],
             "sprite": pick_sprite(d),
+            "color_primary": d.get("color_primary"),
+            "color_secondary": d.get("color_secondary"),
         })
     # Mantener el orden de ids solicitado
     order = {v: i for i, v in enumerate(ids)}

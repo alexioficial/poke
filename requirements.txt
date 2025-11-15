@@ -3,3 +3,4 @@ icecream
 pymongo
 flask
 python-dotenv
+pillow

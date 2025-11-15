@@ -8,7 +8,76 @@
     <style>
       .pkm-card-ambient {
         position: relative;
-        transition: box-shadow 0.3s ease;
+        transition: box-shadow 0.3s ease, transform 0.18s ease;
+        will-change: transform;
+      }
+
+      .pkm-card-ambient:hover {
+        transform: translateY(-4px);
+      }
+
+      .pkm-card-stage {
+        position: relative;
+        overflow: hidden;
+        background:
+          radial-gradient(ellipse at bottom, rgba(15, 23, 42, 0.16), transparent 60%),
+          linear-gradient(to bottom right, #f9fafb, #e5e7eb);
+      }
+
+      .pkm-card-stage::before {
+        content: "";
+        position: absolute;
+        left: 14%;
+        right: 14%;
+        bottom: 12%;
+        height: 18%;
+        border-radius: 9999px;
+        background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.25), transparent 70%);
+        opacity: 0.85;
+        pointer-events: none;
+      }
+
+      .pkm-type-chip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding-inline: 0.7rem;
+        padding-block: 0.2rem;
+        border-radius: 9999px;
+        background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.7),
+          0 6px 12px rgba(15, 23, 42, 0.08);
+        font-weight: 600;
+      }
+
+      .pkm-type-chip:hover {
+        transform: translateY(-1px);
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.9),
+          0 8px 16px rgba(15, 23, 42, 0.12);
+      }
+
+      .pkm-fav-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem;
+        border-radius: 9999px;
+        background: rgba(15, 23, 42, 0.9);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.35);
+        color: #fbbf24;
+      }
+
+      .pkm-fav-btn:hover {
+        background: rgba(15, 23, 42, 1);
+        transform: translateY(-1px);
+      }
+
+      .pkm-fav-btn svg {
+        width: 1.15rem;
+        height: 1.15rem;
       }
     </style>
   </head>
@@ -74,14 +143,27 @@
           }
         });
       }
-      document.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-fav-btn]');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        toggleFav(id);
+      function bindFavButtons() {
+        document.querySelectorAll('[data-fav-btn]')?.forEach((btn) => {
+          if (btn._favBound) return;
+          btn._favBound = true;
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            toggleFav(id);
+          });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        updateStarStates();
+        bindFavButtons();
       });
-      document.addEventListener('DOMContentLoaded', updateStarStates);
-      document.addEventListener('favorites:changed', updateStarStates);
+      document.addEventListener('favorites:changed', () => {
+        updateStarStates();
+        bindFavButtons();
+      });
 
       const TYPE_COLORS = {
         normal: '#a8a29e',

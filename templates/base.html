@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-800">
+    <div id="ambient-bg" class="fixed inset-0 -z-10 pointer-events-none bg-slate-950 transition-[background,opacity] duration-700 ease-out"></div>
     <header class="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-slate-200">
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <h1 class="text-2xl font-bold tracking-tight">PokeDex</h1>
@@ -76,6 +77,86 @@
       });
       document.addEventListener('DOMContentLoaded', updateStarStates);
       document.addEventListener('favorites:changed', updateStarStates);
+
+      const TYPE_COLORS = {
+        normal: '#a8a29e',
+        fire: '#f97316',
+        water: '#0ea5e9',
+        grass: '#22c55e',
+        ice: '#22d3ee',
+        electric: '#eab308',
+        psychic: '#ec4899',
+        fighting: '#ef4444',
+        poison: '#a855f7',
+        ground: '#eab308',
+        flying: '#6366f1',
+        bug: '#84cc16',
+        rock: '#a16207',
+        ghost: '#8b5cf6',
+        steel: '#64748b',
+        dragon: '#7c3aed',
+        dark: '#737373',
+        fairy: '#e879f9',
+      };
+
+      function updateAmbientBackground() {
+        const ambient = document.getElementById('ambient-bg');
+        if (!ambient) return;
+
+        const cards = document.querySelectorAll('[data-pkm-card]');
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const counts = {};
+
+        cards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          if (rect.bottom <= 0 || rect.top >= viewportHeight) return;
+          const typesAttr = card.getAttribute('data-types') || '';
+          typesAttr
+            .split(',')
+            .map((t) => t.trim().toLowerCase())
+            .filter(Boolean)
+            .forEach((t) => {
+              counts[t] = (counts[t] || 0) + 1;
+            });
+        });
+
+        const entries = Object.entries(counts);
+        if (!entries.length) {
+          ambient.style.opacity = '0';
+          return;
+        }
+
+        entries.sort((a, b) => b[1] - a[1]);
+        const mainTypes = entries.slice(0, 3).map(([t]) => t);
+        const palette = mainTypes.map((t) => TYPE_COLORS[t] || '#6366f1');
+        const c1 = palette[0] || '#6366f1';
+        const c2 = palette[1] || '#0ea5e9';
+        const c3 = palette[2] || '#22c55e';
+
+        ambient.style.opacity = '1';
+        ambient.style.background = `
+          radial-gradient(circle at 0% 10%, ${c1}33, transparent 60%),
+          radial-gradient(circle at 100% 0%, ${c2}33, transparent 60%),
+          radial-gradient(circle at 50% 100%, ${c3}33, transparent 65%),
+          radial-gradient(circle at 50% 0%, #020617, #020617)
+        `;
+      }
+
+      let ambientTicking = false;
+      function handleAmbientScroll() {
+        if (ambientTicking) return;
+        ambientTicking = true;
+        requestAnimationFrame(() => {
+          updateAmbientBackground();
+          ambientTicking = false;
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        updateAmbientBackground();
+        window.addEventListener('scroll', handleAmbientScroll);
+        window.addEventListener('resize', handleAmbientScroll);
+      });
     </script>
   </body>
 </html>

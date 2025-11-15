@@ -70,7 +70,9 @@ def pick_sprite_url(pokemon: dict) -> str | None:
         return sprites.get("front_default")
 
 
-def extract_sprite_colors(session: requests.Session, pokemon: dict) -> tuple[str, str] | None:
+def extract_sprite_colors(
+    session: requests.Session, pokemon: dict
+) -> tuple[str, str] | None:
     url = pick_sprite_url(pokemon)
     if not url:
         return None

@@ -2,133 +2,137 @@
 {% block title %}Favoritos{% endblock %}
 
 {% block content %}
-  <div class="flex items-center justify-between mb-6">
-    <h2 class="text-xl font-semibold">Favoritos</h2>
-    <div id="fav-stats" class="text-sm text-slate-500"></div>
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-xl font-semibold">Favoritos</h2>
+  <div id="fav-stats" class="text-sm text-slate-500"></div>
+</div>
+
+<script type="application/json" id="type-classes-json">{{ type_classes | tojson }}</script>
+
+<div id="fav-pagination-top" class="mb-4 flex items-center justify-between hidden">
+  <div>
+    <button id="fav-prev-top"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+      ← Anterior
+    </button>
   </div>
-
-  <script type="application/json" id="type-classes-json">{{ type_classes | tojson }}</script>
-
-  <div id="fav-pagination-top" class="mb-4 flex items-center justify-between hidden">
-    <div>
-      <button id="fav-prev-top" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
-        ← Anterior
-      </button>
-    </div>
-    <div id="fav-page-info-top" class="text-sm text-slate-500"></div>
-    <div>
-      <button id="fav-next-top" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
-        Siguiente →
-      </button>
-    </div>
+  <div id="fav-page-info-top" class="text-sm text-slate-500"></div>
+  <div>
+    <button id="fav-next-top"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+      Siguiente →
+    </button>
   </div>
+</div>
 
-  <div id="fav-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[200px]"></div>
+<div id="fav-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[200px]"></div>
 
-  <div id="fav-pagination" class="mt-8 flex items-center justify-between hidden">
-    <div>
-      <button id="fav-prev" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
-        ← Anterior
-      </button>
-    </div>
-    <div id="fav-page-info" class="text-sm text-slate-500"></div>
-    <div>
-      <button id="fav-next" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
-        Siguiente →
-      </button>
-    </div>
+<div id="fav-pagination" class="mt-8 flex items-center justify-between hidden">
+  <div>
+    <button id="fav-prev"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+      ← Anterior
+    </button>
   </div>
+  <div id="fav-page-info" class="text-sm text-slate-500"></div>
+  <div>
+    <button id="fav-next"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+      Siguiente →
+    </button>
+  </div>
+</div>
 
-  <script>
-    const PAGE_SIZE = 20;
+<script>
+  const PAGE_SIZE = 20;
 
-    function getPageFromUrl() {
-      const p = new URLSearchParams(location.search).get('page');
-      const n = parseInt(p || '1', 10);
-      return isNaN(n) || n < 1 ? 1 : n;
-    }
+  function getPageFromUrl() {
+    const p = new URLSearchParams(location.search).get('page');
+    const n = parseInt(p || '1', 10);
+    return isNaN(n) || n < 1 ? 1 : n;
+  }
 
-    function setPageToUrl(page) {
-      const url = new URL(location.href);
-      url.searchParams.set('page', page);
-      history.pushState({}, '', url);
-    }
+  function setPageToUrl(page) {
+    const url = new URL(location.href);
+    url.searchParams.set('page', page);
+    history.pushState({}, '', url);
+  }
 
-    async function fetchFavsPage(page) {
-      const all = getFavs();
-      const total = all.length;
-      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-      const clampedPage = Math.min(Math.max(1, page), totalPages);
-      const start = (clampedPage - 1) * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const ids = all.slice(start, end);
+  async function fetchFavsPage(page) {
+    const all = getFavs();
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const clampedPage = Math.min(Math.max(1, page), totalPages);
+    const start = (clampedPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const ids = all.slice(start, end);
 
-      document.getElementById('fav-stats').textContent = `Total favoritos: ${total}`;
+    document.getElementById('fav-stats').textContent = `Total favoritos: ${total}`;
 
-      const grid = document.getElementById('fav-grid');
-      const pagTop = document.getElementById('fav-pagination-top');
-      const pag = document.getElementById('fav-pagination');
-      const infoTop = document.getElementById('fav-page-info-top');
-      const info = document.getElementById('fav-page-info');
-      const prevTop = document.getElementById('fav-prev-top');
-      const prevBtn = document.getElementById('fav-prev');
-      const nextTop = document.getElementById('fav-next-top');
-      const nextBtn = document.getElementById('fav-next');
+    const grid = document.getElementById('fav-grid');
+    const pagTop = document.getElementById('fav-pagination-top');
+    const pag = document.getElementById('fav-pagination');
+    const infoTop = document.getElementById('fav-page-info-top');
+    const info = document.getElementById('fav-page-info');
+    const prevTop = document.getElementById('fav-prev-top');
+    const prevBtn = document.getElementById('fav-prev');
+    const nextTop = document.getElementById('fav-next-top');
+    const nextBtn = document.getElementById('fav-next');
 
-      if (ids.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center text-slate-500">No tienes favoritos aún.</div>`;
-        pagTop.classList.add('hidden');
-        pag.classList.add('hidden');
-        return { page: clampedPage, totalPages };
-      }
-
-      try {
-        const res = await fetch(`/api/pokemon?ids=${ids.join(',')}`);
-        const data = await res.json();
-        grid.innerHTML = data.map(p => cardTemplate(p)).join('');
-        if (typeof applyCardAmbient === 'function') {
-          applyCardAmbient();
-        }
-        if (typeof bindFavButtons === 'function') {
-          bindFavButtons();
-        }
-      } catch (e) {
-        grid.innerHTML = `<div class="col-span-full text-center text-red-600">Error cargando favoritos.</div>`;
-      }
-
-      // Paginación (top y bottom)
-      pagTop.classList.remove('hidden');
-      pag.classList.remove('hidden');
-      infoTop.textContent = `Página ${clampedPage} de ${totalPages}`;
-      info.textContent = `Página ${clampedPage} de ${totalPages}`;
-      const disablePrev = clampedPage <= 1;
-      const disableNext = clampedPage >= totalPages;
-      prevTop.disabled = disablePrev; prevBtn.disabled = disablePrev;
-      nextTop.disabled = disableNext; nextBtn.disabled = disableNext;
-
-      const goPrev = () => { const np = Math.max(1, clampedPage - 1); setPageToUrl(np); fetchFavsPage(np); };
-      const goNext = () => { const np = Math.min(totalPages, clampedPage + 1); setPageToUrl(np); fetchFavsPage(np); };
-      prevTop.onclick = goPrev; prevBtn.onclick = goPrev;
-      nextTop.onclick = goNext; nextBtn.onclick = goNext;
-
-      // Actualiza estrellas según localStorage
-      updateStarStates();
-
+    if (ids.length === 0) {
+      grid.innerHTML = `<div class="col-span-full text-center text-slate-500">No tienes favoritos aún.</div>`;
+      pagTop.classList.add('hidden');
+      pag.classList.add('hidden');
       return { page: clampedPage, totalPages };
     }
 
-    function typeBadge(t) {
-      const classes = JSON.parse(document.getElementById('type-classes-json').textContent || '{}');
-      const cls = classes[t] || 'bg-slate-100 text-slate-700 border-slate-200';
-      return `<span class="pkm-type-chip px-2 py-1 text-xs font-medium rounded-full border ${cls}">${t}</span>`;
+    try {
+      const res = await fetch(`/api/pokemon?ids=${ids.join(',')}`);
+      const data = await res.json();
+      grid.innerHTML = data.map(p => cardTemplate(p)).join('');
+      if (typeof applyCardAmbient === 'function') {
+        applyCardAmbient();
+      }
+      if (typeof bindFavButtons === 'function') {
+        bindFavButtons();
+      }
+    } catch (e) {
+      grid.innerHTML = `<div class="col-span-full text-center text-red-600">Error cargando favoritos.</div>`;
     }
 
-    function cardTemplate(p) {
-      const types = (p.types || []).map(typeBadge).join('');
-      const sprite = p.sprite ? `<img src="${p.sprite}" alt="${p.name}" class="w-40 h-40 object-contain drop-shadow-md group-hover:scale-105 transition" crossorigin="anonymous"/>` : `<div class=\"text-slate-400\">Sin imagen</div>`;
-      const typesAttr = (p.types || []).join(',');
-      const colorsAttr = [p.color_primary || '', p.color_secondary || ''].join(',');
-      return `
+    // Paginación (top y bottom)
+    pagTop.classList.remove('hidden');
+    pag.classList.remove('hidden');
+    infoTop.textContent = `Página ${clampedPage} de ${totalPages}`;
+    info.textContent = `Página ${clampedPage} de ${totalPages}`;
+    const disablePrev = clampedPage <= 1;
+    const disableNext = clampedPage >= totalPages;
+    prevTop.disabled = disablePrev; prevBtn.disabled = disablePrev;
+    nextTop.disabled = disableNext; nextBtn.disabled = disableNext;
+
+    const goPrev = () => { const np = Math.max(1, clampedPage - 1); setPageToUrl(np); fetchFavsPage(np); };
+    const goNext = () => { const np = Math.min(totalPages, clampedPage + 1); setPageToUrl(np); fetchFavsPage(np); };
+    prevTop.onclick = goPrev; prevBtn.onclick = goPrev;
+    nextTop.onclick = goNext; nextBtn.onclick = goNext;
+
+    // Actualiza estrellas según localStorage
+    updateStarStates();
+
+    return { page: clampedPage, totalPages };
+  }
+
+  function typeBadge(t) {
+    const classes = JSON.parse(document.getElementById('type-classes-json').textContent || '{}');
+    const cls = classes[t] || 'bg-slate-100 text-slate-700 border-slate-200';
+    return `<span class="pkm-type-chip px-2 py-1 text-xs font-medium rounded-full border ${cls}">${t}</span>`;
+  }
+
+  function cardTemplate(p) {
+    const types = (p.types || []).map(typeBadge).join('');
+    const sprite = p.sprite ? `<img src="${p.sprite}" alt="${p.name}" class="w-40 h-40 object-contain drop-shadow-md group-hover:scale-105 transition" crossorigin="anonymous"/>` : `<div class=\"text-slate-400\">Sin imagen</div>`;
+    const typesAttr = (p.types || []).join(',');
+    const colorsAttr = [p.color_primary || '', p.color_secondary || ''].join(',');
+    return `
         <article class="pkm-card-ambient group relative bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 hover:shadow-md transition overflow-hidden" data-pkm-card data-types="${typesAttr}" data-colors="${colorsAttr}">
           <button class="absolute top-2 right-2 p-1 rounded-full bg-white/80 ring-1 ring-slate-200 hover:bg-white transition"
                   type="button" aria-label="Favorito" data-fav-btn data-id="${p.id}">
@@ -147,21 +151,21 @@
           </div>
         </article>
       `;
-    }
+  }
 
-    function renderOnFavsChange() {
-      const page = getPageFromUrl();
-      fetchFavsPage(page);
-    }
+  function renderOnFavsChange() {
+    const page = getPageFromUrl();
+    fetchFavsPage(page);
+  }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      renderOnFavsChange();
-    });
-    document.addEventListener('favorites:changed', () => {
-      renderOnFavsChange();
-    });
-    window.addEventListener('popstate', () => {
-      renderOnFavsChange();
-    });
-  </script>
+  document.addEventListener('DOMContentLoaded', () => {
+    renderOnFavsChange();
+  });
+  document.addEventListener('favorites:changed', () => {
+    renderOnFavsChange();
+  });
+  window.addEventListener('popstate', () => {
+    renderOnFavsChange();
+  });
+</script>
 {% endblock %}

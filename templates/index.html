@@ -49,18 +49,6 @@
           </select>
         </div>
       </div>
-      <div class="md:col-span-2 lg:col-span-1 flex flex-col items-start justify-end gap-1">
-        <label class="block text-xs text-slate-500 mb-1">Pokémon por fila</label>
-        <select name="cols" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
-          <option value="3" {% if cols == 3 %}selected{% endif %}>3</option>
-          <option value="4" {% if cols == 4 %}selected{% endif %}>4</option>
-          <option value="5" {% if cols == 5 %}selected{% endif %}>5</option>
-          <option value="6" {% if cols == 6 %}selected{% endif %}>6</option>
-        </select>
-      </div>
-      <div class="md:col-span-2 lg:col-span-1 flex items-end justify-end">
-        <button type="button" id="open-extra-filters" class="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">Filtros extra</button>
-      </div>
     </form>
   </div>
 
@@ -84,60 +72,11 @@
     </div>
   </div>
 
-  <div id="extra-filters-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/30" data-close-extra></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-      <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl ring-1 ring-slate-200 overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-          <h3 class="text-lg font-semibold">Filtros extra</h3>
-          <button class="px-3 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50" data-close-extra>Cerrar</button>
-        </div>
-        <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Altura mínima</label>
-            <input form="filters-form" id="hmin-input" name="hmin" value="{{ height_min }}" placeholder="ej. 5" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Altura máxima</label>
-            <input form="filters-form" id="hmax-input" name="hmax" value="{{ height_max }}" placeholder="ej. 20" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Peso mínimo</label>
-            <input form="filters-form" id="wmin-input" name="wmin" value="{{ weight_min }}" placeholder="ej. 50" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Peso máximo</label>
-            <input form="filters-form" id="wmax-input" name="wmax" value="{{ weight_max }}" placeholder="ej. 200" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Exp. base mín.</label>
-            <input form="filters-form" id="expmin-input" name="expmin" value="{{ exp_min }}" placeholder="ej. 50" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Exp. base máx.</label>
-            <input form="filters-form" id="expmax-input" name="expmax" value="{{ exp_max }}" placeholder="ej. 200" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Diferencias de género</label>
-            <select form="filters-form" id="gender-select" name="gender" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
-              <option value="" {% if not gender_filter %}selected{% endif %}>Cualquiera</option>
-              <option value="diff" {% if gender_filter == 'diff' %}selected{% endif %}>Con diferencia de género</option>
-              <option value="no_diff" {% if gender_filter == 'no_diff' %}selected{% endif %}>Sin diferencia de género</option>
-            </select>
-          </div>
-        </div>
-        <div class="px-4 py-3 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button type="button" id="extra-clear" class="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50">Limpiar</button>
-          <button type="button" id="extra-apply" class="px-4 py-2 rounded-lg border border-blue-300 bg-blue-600 text-white hover:bg-blue-700">Aplicar filtros</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div class="mb-4 flex items-center justify-between">
     <div class="text-sm text-slate-500">Página {{ page }} de {{ total_pages }}</div>
     <div class="flex items-center gap-2">
-      {% set qparams = "&q=" ~ q ~ "&id=" ~ id_param ~ "&types=" ~ types_param ~ "&sort=" ~ sort ~ "&dir=" ~ dir ~ "&hmin=" ~ height_min ~ "&hmax=" ~ height_max ~ "&wmin=" ~ weight_min ~ "&wmax=" ~ weight_max ~ "&expmin=" ~ exp_min ~ "&expmax=" ~ exp_max ~ "&gender=" ~ gender_filter ~ "&cols=" ~ cols %}
+      {% set qparams = "&q=" ~ q ~ "&id=" ~ id_param ~ "&types=" ~ types_param ~ "&sort=" ~ sort ~ "&dir=" ~ dir %}
       {% if has_prev %}
         <a href="/?page={{ page - 1 }}{{ qparams }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">← Anterior</a>
       {% else %}
@@ -152,12 +91,7 @@
   </div>
 
   {% if pokemons %}
-    <div class="grid gap-6
-                grid-cols-1
-                {% if cols == 3 %}sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3{% endif %}
-                {% if cols == 4 %}sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4{% endif %}
-                {% if cols == 5 %}sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5{% endif %}
-                {% if cols == 6 %}sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6{% endif %}">
+    <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {% for p in pokemons %}
         <article class="group relative bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 hover:shadow-md transition overflow-hidden">
           <button class="absolute top-2 right-2 p-1 rounded-full bg-white/80 ring-1 ring-slate-200 hover:bg-white transition"
@@ -194,7 +128,7 @@
   <div class="mt-6 flex items-center justify-between">
     <div class="text-sm text-slate-500">Página {{ page }} de {{ total_pages }}</div>
     <div class="flex items-center gap-2">
-      {% set qparams = "&q=" ~ q ~ "&id=" ~ id_param ~ "&types=" ~ types_param ~ "&sort=" ~ sort ~ "&dir=" ~ dir ~ "&hmin=" ~ height_min ~ "&hmax=" ~ height_max ~ "&wmin=" ~ weight_min ~ "&wmax=" ~ weight_max ~ "&expmin=" ~ exp_min ~ "&expmax=" ~ exp_max ~ "&gender=" ~ gender_filter ~ "&cols=" ~ cols %}
+      {% set qparams = "&q=" ~ q ~ "&id=" ~ id_param ~ "&types=" ~ types_param ~ "&sort=" ~ sort ~ "&dir=" ~ dir %}
       {% if has_prev %}
         <a href="/?page={{ page - 1 }}{{ qparams }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50">← Anterior</a>
       {% else %}
@@ -309,53 +243,6 @@
       renderSelected();
       submitFilters();
     });
-
-    const extraModal = document.getElementById('extra-filters-modal');
-    const btnOpenExtra = document.getElementById('open-extra-filters');
-    const btnExtraApply = document.getElementById('extra-apply');
-    const btnExtraClear = document.getElementById('extra-clear');
-    const extraHmin = document.getElementById('hmin-input');
-    const extraHmax = document.getElementById('hmax-input');
-    const extraWmin = document.getElementById('wmin-input');
-    const extraWmax = document.getElementById('wmax-input');
-    const extraExpMin = document.getElementById('expmin-input');
-    const extraExpMax = document.getElementById('expmax-input');
-    const genderSelect = document.getElementById('gender-select');
-
-    function openExtraModal() { if (extraModal) extraModal.classList.remove('hidden'); }
-    function closeExtraModal() { if (extraModal) extraModal.classList.add('hidden'); }
-
-    if (btnOpenExtra) {
-      btnOpenExtra.addEventListener('click', () => {
-        openExtraModal();
-      });
-    }
-
-    document.addEventListener('click', (e) => {
-      if (e.target.matches('[data-close-extra]')) {
-        closeExtraModal();
-      }
-    });
-
-    if (btnExtraApply) {
-      btnExtraApply.addEventListener('click', () => {
-        closeExtraModal();
-        submitFilters();
-      });
-    }
-
-    if (btnExtraClear) {
-      btnExtraClear.addEventListener('click', () => {
-        if (extraHmin) extraHmin.value = '';
-        if (extraHmax) extraHmax.value = '';
-        if (extraWmin) extraWmin.value = '';
-        if (extraWmax) extraWmax.value = '';
-        if (extraExpMin) extraExpMin.value = '';
-        if (extraExpMax) extraExpMax.value = '';
-        if (genderSelect) genderSelect.value = '';
-        submitFilters();
-      });
-    }
 
     // init
     renderSelected();

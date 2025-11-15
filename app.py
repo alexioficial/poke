@@ -3,7 +3,7 @@ from db import setup_db, pokemon_col
 
 app = Flask(__name__)
 
-PAGE_SIZE = 24
+PAGE_SIZE = 20
 
 TYPE_CLASSES = {
     "normal": "bg-stone-100 text-stone-700 border-stone-200",
@@ -59,30 +59,10 @@ def index():
     types_param = (request.args.get("types") or "").strip()
     sort = (request.args.get("sort") or "id").strip()
     direction = (request.args.get("dir") or "asc").strip().lower()
-    height_min = (request.args.get("hmin") or "").strip()
-    height_max = (request.args.get("hmax") or "").strip()
-    weight_min = (request.args.get("wmin") or "").strip()
-    weight_max = (request.args.get("wmax") or "").strip()
-    exp_min = (request.args.get("expmin") or "").strip()
-    exp_max = (request.args.get("expmax") or "").strip()
-    gender_filter = (request.args.get("gender") or "").strip()
-    try:
-        cols = int(request.args.get("cols", 6))
-    except ValueError:
-        cols = 6
-    if cols not in (3, 4, 5, 6):
-        cols = 6
     dir_val = 1 if direction != "desc" else -1
 
     # Mongo query
     query = {}
-    def parse_int(value):
-        if not value:
-            return None
-        try:
-            return int(value)
-        except ValueError:
-            return None
     if q:
         query["name"] = {"$regex": q, "$options": "i"}
     if id_param.isdigit():
@@ -91,41 +71,6 @@ def index():
         type_list = [t.strip().lower() for t in types_param.split(",") if t.strip()]
         if type_list:
             query["types.type.name"] = {"$in": type_list}
-
-    hmin_val = parse_int(height_min)
-    hmax_val = parse_int(height_max)
-    if hmin_val is not None or hmax_val is not None:
-        height_query = {}
-        if hmin_val is not None:
-            height_query["$gte"] = hmin_val
-        if hmax_val is not None:
-            height_query["$lte"] = hmax_val
-        query["height"] = height_query
-
-    wmin_val = parse_int(weight_min)
-    wmax_val = parse_int(weight_max)
-    if wmin_val is not None or wmax_val is not None:
-        weight_query = {}
-        if wmin_val is not None:
-            weight_query["$gte"] = wmin_val
-        if wmax_val is not None:
-            weight_query["$lte"] = wmax_val
-        query["weight"] = weight_query
-
-    expmin_val = parse_int(exp_min)
-    expmax_val = parse_int(exp_max)
-    if expmin_val is not None or expmax_val is not None:
-        exp_query = {}
-        if expmin_val is not None:
-            exp_query["$gte"] = expmin_val
-        if expmax_val is not None:
-            exp_query["$lte"] = expmax_val
-        query["base_experience"] = exp_query
-
-    if gender_filter == "diff":
-        query["sprites.front_female"] = {"$ne": None}
-    elif gender_filter == "no_diff":
-        query["sprites.front_female"] = None
 
     # Pagination calc
     offset = (page - 1) * PAGE_SIZE
@@ -198,14 +143,7 @@ def index():
         types_param=types_param,
         sort=sort,
         dir=direction,
-        height_min=height_min,
-        height_max=height_max,
-        weight_min=weight_min,
-        weight_max=weight_max,
-        exp_min=exp_min,
-        exp_max=exp_max,
-        gender_filter=gender_filter,
-        cols=cols,
+        cols=5,
     )
 
 

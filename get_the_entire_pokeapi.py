@@ -201,9 +201,85 @@ def iter_through_urls():
     print(f"✅ Completed! Total URLs processed: {len(processed_urls)}")
 
 
+def fetch_and_update_url(url: str, url_id) -> None:
+    """Hace fetch a una URL y actualiza el documento con los datos"""
+    MAX_RETRIES = 3
+    RETRY_DELAY = 2  # segundos base para el delay
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            # Determinar si usar parámetros offset/limit
+            params = PARAMS if should_use_params(url) else {}
+
+            # Hacer fetch
+            data = fetch(url, params)
+
+            # Actualizar el documento en la DB
+            url_col.update_one({"_id": url_id}, {"$set": {"data": data}})
+            print(f"✓ Fetched and saved: {url}")
+
+            # Pequeño delay para no sobrecargar la API
+            time.sleep(0.1)
+            return  # Éxito, salir de la función
+
+        except Exception as e:
+            error_msg = f"{type(e).__name__} - {str(e)}"
+
+            if attempt < MAX_RETRIES - 1:
+                # Calcular delay con backoff exponencial
+                delay = RETRY_DELAY * (2**attempt)
+                print(
+                    f"⚠ Error fetching {url} (attempt {attempt + 1}/{MAX_RETRIES}): {error_msg}"
+                )
+                print(f"  ↻ Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                # Último intento falló
+                print(f"✗ Failed after {MAX_RETRIES} attempts: {url} - {error_msg}")
+
+
+def process_url_batch(urls_batch: list) -> None:
+    """Procesa un batch de URLs"""
+    for url_doc in urls_batch:
+        fetch_and_update_url(url_doc["url"], url_doc["_id"])
+
+
 def put_urls_data() -> None:
-    pass
+    """Itera sobre todas las URLs y hace fetch a cada una, guardando los datos en paralelo"""
+
+    print("🚀 Starting data fetching for all URLs...")
+
+    # Obtener todas las URLs de la colección
+    all_urls = list(url_col.find({}, {"_id": 1, "url": 1}))
+    total_urls = len(all_urls)
+
+    print(f"📊 Total URLs to fetch: {total_urls}")
+
+    # Dividir en batches de 1000
+    BATCH_SIZE = 1000
+    batches = [all_urls[i : i + BATCH_SIZE] for i in range(0, total_urls, BATCH_SIZE)]
+
+    print(f"📦 Created {len(batches)} batches of up to {BATCH_SIZE} URLs")
+    print(f"🔧 Starting {len(batches)} threads (1 per batch)...\n")
+
+    # Crear un thread por cada batch
+    threads = []
+    for i, batch in enumerate(batches):
+        t = Thread(target=process_url_batch, args=(batch,), name=f"Batch-{i + 1}")
+        t.start()
+        threads.append(t)
+        print(f"  Thread {i + 1}/{len(batches)} started (processing {len(batch)} URLs)")
+
+    # Esperar a que todos los threads terminen
+    print("\n⏳ Waiting for all threads to complete...\n")
+    for i, t in enumerate(threads):
+        t.join()
+        print(f"  ✓ Thread {i + 1}/{len(threads)} completed")
+
+    print(f"\n✅ Completed! All {total_urls} URLs have been fetched and saved.")
 
 
 if __name__ == "__main__":
-    iter_through_urls()
+    # Descomentar la que quieras ejecutar:
+    iter_through_urls()  # Para obtener todas las URLs
+    put_urls_data()  # Para hacer fetch de los datos

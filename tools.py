@@ -12,7 +12,7 @@ def is_valid_url(url_string: str) -> bool:
 
 
 def fetch(url: str, params: dict = {}) -> dict:
-    response: Response = requests.get(url=url, params=params, timeout=10)
+    response: Response = requests.get(url=url, params=params, timeout=30)
     response.raise_for_status()
     data: dict = response.json()
     return data

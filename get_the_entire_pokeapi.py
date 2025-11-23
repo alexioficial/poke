@@ -281,5 +281,5 @@ def put_urls_data() -> None:
 
 if __name__ == "__main__":
     # Descomentar la que quieras ejecutar:
-    iter_through_urls()  # Para obtener todas las URLs
+    # iter_through_urls()  # Para obtener todas las URLs
     put_urls_data()  # Para hacer fetch de los datos
